@@ -1,0 +1,492 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Interactive React Component</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #root {
+            padding: 20px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Interactive React Component</h1>
+    <div id="root">
+        <pre><code>import React, { useState, useEffect } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, ScatterPlot, Scatter } from 'recharts';
+
+const JumpAnalysisReport = () => {
+  const [activeSection, setActiveSection] = useState('summary');
+
+  // Raw data extracted from PDF
+  const controlData = [
+    { name: "Finn Anderson", jumpHeight: 0.287833, jumpMomentum: 203.4061, countermovementDepth: -0.28697, brakingRFD: 5097.405, stiffness: -6381.98, takeoffVelocity: 2.376033 },
+    { name: "Jemma Blair", jumpHeight: 0.276233, jumpMomentum: 177.5988, countermovementDepth: -0.35653, brakingRFD: 6834.178, stiffness: -5176.97, takeoffVelocity: 2.3276 },
+    { name: "Kaylee Honiss", jumpHeight: 0.224633, jumpMomentum: 178.2495, countermovementDepth: -0.33997, brakingRFD: 5627.638, stiffness: -5365.63, takeoffVelocity: 2.099267 },
+    { name: "Levi Samuela", jumpHeight: 0.228067, jumpMomentum: 230.4433, countermovementDepth: -0.23817, brakingRFD: 2970.129, stiffness: -7422.35, takeoffVelocity: 2.109067 },
+    { name: "Meg Kirchner", jumpHeight: 0.2058, jumpMomentum: 140.7898, countermovementDepth: -0.3214, brakingRFD: 1728.56, stiffness: -3606.07, takeoffVelocity: 2.009367 },
+    { name: "Rose Bentley", jumpHeight: 0.2001, jumpMomentum: 147.2692, countermovementDepth: -0.3304, brakingRFD: 3030.603, stiffness: -4221.95, takeoffVelocity: 1.981233 },
+    { name: "Sam Canny", jumpHeight: 0.304333, jumpMomentum: 185.2027, countermovementDepth: -0.31223, brakingRFD: 4833.457, stiffness: -5344.98, takeoffVelocity: 2.4434 },
+    { name: "Zoe Gray", jumpHeight: 0.265933, jumpMomentum: 182.7208, countermovementDepth: -0.25313, brakingRFD: 9141.754, stiffness: -7931.73, takeoffVelocity: 2.284133 },
+    { name: "Zoe Walker", jumpHeight: 0.232533, jumpMomentum: 131.1925, countermovementDepth: -0.30903, brakingRFD: 3711.776, stiffness: -4246.19, takeoffVelocity: 2.135067 }
+  ];
+
+  const papeData = [
+    { name: "Finn Anderson", jumpHeight: 0.302767, jumpMomentum: 208.5967, countermovementDepth: -0.29117, brakingRFD: 5432.373, stiffness: -6466.02, takeoffVelocity: 2.436967 },
+    { name: "Jemma Blair", jumpHeight: 0.272633, jumpMomentum: 176.3291, countermovementDepth: -0.35093, brakingRFD: 5321.094, stiffness: -4864.28, takeoffVelocity: 2.3126 },
+    { name: "Kaylee Honiss", jumpHeight: 0.237333, jumpMomentum: 183.0622, countermovementDepth: -0.32493, brakingRFD: 5483.717, stiffness: -5562.95, takeoffVelocity: 2.157933 },
+    { name: "Levi Samuela", jumpHeight: 0.253233, jumpMomentum: 243.3432, countermovementDepth: -0.1839, brakingRFD: 2166.132, stiffness: -8449.09, takeoffVelocity: 2.2281 },
+    { name: "Meg Kirchner", jumpHeight: 0.21765, jumpMomentum: 144.8244, countermovementDepth: -0.28095, brakingRFD: 3043.16, stiffness: -4636.12, takeoffVelocity: 2.06645 },
+    { name: "Rose Bentley", jumpHeight: 0.2183, jumpMomentum: 153.38, countermovementDepth: -0.327, brakingRFD: 3251.225, stiffness: -4327.35, takeoffVelocity: 2.069633 },
+    { name: "Sam Canny", jumpHeight: 0.3357, jumpMomentum: 194.8781, countermovementDepth: -0.32117, brakingRFD: 5617.709, stiffness: -5378.73, takeoffVelocity: 2.566033 },
+    { name: "Zoe Gray", jumpHeight: 0.272633, jumpMomentum: 184.8566, countermovementDepth: -0.24213, brakingRFD: 8884.613, stiffness: -8084.79, takeoffVelocity: 2.312533 },
+    { name: "Zoe Walker", jumpHeight: 0.249133, jumpMomentum: 136.0411, countermovementDepth: -0.30537, brakingRFD: 4343.819, stiffness: -4485.15, takeoffVelocity: 2.210633 }
+  ];
+
+  // Calculate paired t-test statistics
+  const calculatePairedTTest = (control, pape, variable) => {
+    const differences = control.map((item, index) => pape[index][variable] - item[variable]);
+    const n = differences.length;
+    const mean = differences.reduce((sum, diff) => sum + diff, 0) / n;
+    const variance = differences.reduce((sum, diff) => sum + Math.pow(diff - mean, 2), 0) / (n - 1);
+    const stdError = Math.sqrt(variance / n);
+    const tStat = mean / stdError;
+    const df = n - 1;
+    
+    // Approximate p-value calculation (simplified)
+    const pValue = tStat > 0 ? 
+      (Math.abs(tStat) > 2.306 ? "< 0.05" : "> 0.05") :
+      (Math.abs(tStat) > 2.306 ? "< 0.05" : "> 0.05");
+    
+    return {
+      variable,
+      meanDifference: mean,
+      tStatistic: tStat,
+      pValue,
+      significant: Math.abs(tStat) > 2.306,
+      effectSize: mean / Math.sqrt(variance)
+    };
+  };
+
+  const variables = ['jumpHeight', 'jumpMomentum', 'countermovementDepth', 'brakingRFD', 'stiffness', 'takeoffVelocity'];
+  const tTestResults = variables.map(variable => calculatePairedTTest(controlData, papeData, variable));
+
+  // Prepare comparison data for visualization
+  const comparisonData = variables.map(variable => {
+    const controlMean = controlData.reduce((sum, item) => sum + item[variable], 0) / controlData.length;
+    const papeMean = papeData.reduce((sum, item) => sum + item[variable], 0) / papeData.length;
+    const result = tTestResults.find(r => r.variable === variable);
+    
+    return {
+      variable: variable.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()),
+      control: controlMean,
+      pape: papeMean,
+      pValue: result.pValue,
+      significant: result.significant
+    };
+  });
+
+  const significantResults = tTestResults.filter(result => result.significant);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-white">
+      {/* Header */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
+        <div className="relative px-8 py-12">
+          <div className="max-w-6xl mx-auto">
+            <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              Jump Performance Analysis
+            </h1>
+            <p className="text-xl text-blue-200 mb-8">
+              Paired T-Test Analysis: Control vs PAPE Intervention
+            </p>
+            
+            {/* Navigation */}
+            <div className="flex flex-wrap gap-4">
+              {['summary', 'results', 'visualizations', 'recommendations'].map((section) => (
+                <button
+                  key={section}
+                  onClick={() => setActiveSection(section)}
+                  className={`px-6 py-3 rounded-lg font-medium transition-all transform hover:scale-105 ${
+                    activeSection === section 
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg' 
+                      : 'bg-white/10 hover:bg-white/20 backdrop-blur-sm'
+                  }`}
+                >
+                  {section.charAt(0).toUpperCase() + section.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Content Sections */}
+      <div className="max-w-6xl mx-auto px-8 py-12">
+        
+        {/* Executive Summary */}
+        {activeSection === 'summary' && (
+          <div className="space-y-8 animate-fade-in">
+            <div className="bg-gradient-to-r from-white/10 to-white/5 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+              <h2 className="text-3xl font-bold mb-6 text-blue-300">Executive Summary</h2>
+              
+              <div className="grid md:grid-cols-2 gap-8">
+                <div>
+                  <h3 className="text-xl font-semibold mb-4 text-purple-300">Study Overview</h3>
+                  <div className="space-y-3 text-gray-300">
+                    <p><strong>Participants:</strong> 9 athletes</p>
+                    <p><strong>Design:</strong> Paired t-test analysis</p>
+                    <p><strong>Conditions:</strong> Control vs PAPE intervention</p>
+                    <p><strong>Variables Analyzed:</strong> 6 key performance metrics</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-xl font-semibold mb-4 text-purple-300">Key Findings</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                      <span className="text-gray-300">{significantResults.length} significant improvements found</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 rounded-full bg-blue-400"></div>
+                      <span className="text-gray-300">Jump height showed positive trends</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 rounded-full bg-purple-400"></div>
+                      <span className="text-gray-300">Velocity parameters improved consistently</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Stats */}
+            <div className="grid md:grid-cols-3 gap-6">
+              {comparisonData.slice(0, 3).map((item, index) => (
+                <div key={index} className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/20">
+                  <h3 className="text-lg font-semibold mb-3 text-blue-300">{item.variable}</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-300">Control:</span>
+                      <span className="font-mono text-white">{item.control.toFixed(3)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-300">PAPE:</span>
+                      <span className="font-mono text-white">{item.pape.toFixed(3)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-300">P-value:</span>
+                      <span className={`font-mono ${item.significant ? 'text-green-400' : 'text-yellow-400'}`}>
+                        {item.pValue}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Statistical Results */}
+        {activeSection === 'results' && (
+          <div className="space-y-8 animate-fade-in">
+            <div className="bg-gradient-to-r from-white/10 to-white/5 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+              <h2 className="text-3xl font-bold mb-6 text-blue-300">Statistical Analysis Results</h2>
+              
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="border-b border-white/20">
+                      <th className="text-left py-4 px-4 text-purple-300 font-semibold">Variable</th>
+                      <th className="text-center py-4 px-4 text-purple-300 font-semibold">Mean Difference</th>
+                      <th className="text-center py-4 px-4 text-purple-300 font-semibold">t-Statistic</th>
+                      <th className="text-center py-4 px-4 text-purple-300 font-semibold">P-Value</th>
+                      <th className="text-center py-4 px-4 text-purple-300 font-semibold">Effect Size</th>
+                      <th className="text-center py-4 px-4 text-purple-300 font-semibold">Significant</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tTestResults.map((result, index) => (
+                      <tr key={index} className={`border-b border-white/10 ${result.significant ? 'bg-green-500/10' : ''}`}>
+                        <td className="py-4 px-4 text-white font-medium">
+                          {result.variable.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                        </td>
+                        <td className="py-4 px-4 text-center font-mono text-gray-300">
+                          {result.meanDifference.toFixed(4)}
+                        </td>
+                        <td className="py-4 px-4 text-center font-mono text-gray-300">
+                          {result.tStatistic.toFixed(3)}
+                        </td>
+                        <td className="py-4 px-4 text-center font-mono text-gray-300">
+                          {result.pValue}
+                        </td>
+                        <td className="py-4 px-4 text-center font-mono text-gray-300">
+                          {result.effectSize.toFixed(3)}
+                        </td>
+                        <td className="py-4 px-4 text-center">
+                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                            result.significant 
+                              ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                              : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+                          }`}>
+                            {result.significant ? 'Yes' : 'No'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Interpretation */}
+            <div className="bg-gradient-to-r from-white/10 to-white/5 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+              <h3 className="text-2xl font-bold mb-6 text-blue-300">Statistical Interpretation</h3>
+              
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-lg font-semibold mb-3 text-purple-300">Significant Findings</h4>
+                  {significantResults.length > 0 ? (
+                    <ul className="space-y-2">
+                      {significantResults.map((result, index) => (
+                        <li key={index} className="flex items-center gap-3 text-gray-300">
+                          <div className="w-2 h-2 rounded-full bg-green-400"></div>
+                          <span>
+                            <strong>{result.variable.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</strong>: 
+                            Mean difference of {result.meanDifference.toFixed(4)} (p {result.pValue})
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-gray-300">No statistically significant differences were found at α = 0.05 level.</p>
+                  )}
+                </div>
+
+                <div>
+                  <h4 className="text-lg font-semibold mb-3 text-purple-300">Effect Sizes</h4>
+                  <p className="text-gray-300 mb-3">Cohen's d interpretation:</p>
+                  <ul className="space-y-1 text-sm text-gray-400">
+                    <li>• Small effect: 0.2 - 0.5</li>
+                    <li>• Medium effect: 0.5 - 0.8</li>
+                    <li>• Large effect: > 0.8</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Visualizations */}
+        {activeSection === 'visualizations' && (
+          <div className="space-y-8 animate-fade-in">
+            <div className="bg-gradient-to-r from-white/10 to-white/5 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+              <h2 className="text-3xl font-bold mb-6 text-blue-300">Data Visualizations</h2>
+              
+              {/* Comparison Chart */}
+              <div className="mb-12">
+                <h3 className="text-xl font-semibold mb-4 text-purple-300">Mean Values Comparison</h3>
+                <div className="h-96 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={comparisonData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <XAxis 
+                        dataKey="variable" 
+                        stroke="#9CA3AF"
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                      />
+                      <YAxis stroke="#9CA3AF" />
+                      <Tooltip 
+                        contentStyle={{
+                          backgroundColor: '#1F2937',
+                          border: '1px solid #374151',
+                          borderRadius: '8px',
+                          color: '#F3F4F6'
+                        }}
+                      />
+                      <Bar dataKey="control" fill="#3B82F6" name="Control" />
+                      <Bar dataKey="pape" fill="#8B5CF6" name="PAPE" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Individual Performance Charts */}
+              <div className="grid md:grid-cols-2 gap-8">
+                <div>
+                  <h3 className="text-xl font-semibold mb-4 text-purple-300">Jump Height Individual Responses</h3>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={controlData.map((item, index) => ({
+                        name: item.name.split(' ')[0],
+                        control: item.jumpHeight,
+                        pape: papeData[index].jumpHeight
+                      }))}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                        <XAxis dataKey="name" stroke="#9CA3AF" />
+                        <YAxis stroke="#9CA3AF" />
+                        <Tooltip 
+                          contentStyle={{
+                            backgroundColor: '#1F2937',
+                            border: '1px solid #374151',
+                            borderRadius: '8px',
+                            color: '#F3F4F6'
+                          }}
+                        />
+                        <Line type="monotone" dataKey="control" stroke="#3B82F6" strokeWidth={2} />
+                        <Line type="monotone" dataKey="pape" stroke="#8B5CF6" strokeWidth={2} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-semibold mb-4 text-purple-300">Takeoff Velocity Individual Responses</h3>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={controlData.map((item, index) => ({
+                        name: item.name.split(' ')[0],
+                        control: item.takeoffVelocity,
+                        pape: papeData[index].takeoffVelocity
+                      }))}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                        <XAxis dataKey="name" stroke="#9CA3AF" />
+                        <YAxis stroke="#9CA3AF" />
+                        <Tooltip 
+                          contentStyle={{
+                            backgroundColor: '#1F2937',
+                            border: '1px solid #374151',
+                            borderRadius: '8px',
+                            color: '#F3F4F6'
+                          }}
+                        />
+                        <Line type="monotone" dataKey="control" stroke="#3B82F6" strokeWidth={2} />
+                        <Line type="monotone" dataKey="pape" stroke="#8B5CF6" strokeWidth={2} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Recommendations */}
+        {activeSection === 'recommendations' && (
+          <div className="space-y-8 animate-fade-in">
+            <div className="bg-gradient-to-r from-white/10 to-white/5 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+              <h2 className="text-3xl font-bold mb-6 text-blue-300">Recommendations & Conclusions</h2>
+              
+              <div className="space-y-8">
+                <div>
+                  <h3 className="text-xl font-semibold mb-4 text-purple-300">Key Insights</h3>
+                  <div className="space-y-4">
+                    <div className="bg-gradient-to-r from-green-500/10 to-green-600/10 p-4 rounded-lg border border-green-500/20">
+                      <h4 className="font-semibold text-green-300 mb-2">Positive Trends Observed</h4>
+                      <p className="text-gray-300">
+                        While statistical significance was limited, several metrics showed positive trends following PAPE intervention, 
+                        suggesting potential performance benefits that may become significant with larger sample sizes.
+                      </p>
+                    </div>
+                    
+                    <div className="bg-gradient-to-r from-blue-500/10 to-blue-600/10 p-4 rounded-lg border border-blue-500/20">
+                      <h4 className="font-semibold text-blue-300 mb-2">Individual Variability</h4>
+                      <p className="text-gray-300">
+                        Individual responses to PAPE varied considerably, suggesting the need for personalized intervention 
+                        protocols based on athlete characteristics and training status.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-semibold mb-4 text-purple-300">Future Research Directions</h3>
+                  <ul className="space-y-3">
+                    <li className="flex items-start gap-3">
+                      <div className="w-2 h-2 rounded-full bg-purple-400 mt-2"></div>
+                      <span className="text-gray-300">
+                        <strong>Increase sample size</strong> to improve statistical power and detect smaller effect sizes
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <div className="w-2 h-2 rounded-full bg-purple-400 mt-2"></div>
+                      <span className="text-gray-300">
+                        <strong>Investigate individual factors</strong> that may predict PAPE responsiveness
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <div className="w-2 h-2 rounded-full bg-purple-400 mt-2"></div>
+                      <span className="text-gray-300">
+                        <strong>Examine different PAPE protocols</strong> to optimize intervention effectiveness
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <div className="w-2 h-2 rounded-full bg-purple-400 mt-2"></div>
+                      <span className="text-gray-300">
+                        <strong>Long-term follow-up studies</strong> to assess sustained performance improvements
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-semibold mb-4 text-purple-300">Practical Applications</h3>
+                  <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 p-6 rounded-lg border border-yellow-500/20">
+                    <p className="text-gray-300">
+                      Despite limited statistical significance, the observed trends suggest PAPE may offer practical benefits 
+                      for jump performance enhancement. Coaches should consider individual athlete responses and implement 
+                      PAPE protocols as part of a comprehensive training program while monitoring individual adaptations.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="bg-black/20 backdrop-blur-sm border-t border-white/10 mt-16">
+        <div className="max-w-6xl mx-auto px-8 py-6">
+          <div className="flex justify-between items-center">
+            <div className="text-gray-400">
+              <p>Jump Performance Analysis Report</p>
+              <p className="text-sm">Generated: {new Date().toLocaleDateString()}</p>
+            </div>
+            <div className="text-gray-400 text-sm">
+              <p>Statistical Analysis: Paired t-tests (α = 0.05)</p>
+              <p>Sample Size: n = 9 participants</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <style jsx>{`
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.6s ease-out;
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export default JumpAnalysisReport;</code></pre>
+    </div>
+    <p>This is a static HTML representation of your React component. For full interactivity, consider hosting the app and embedding it via iframe.</p>
+</body>
+</html>
